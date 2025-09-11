@@ -18,33 +18,21 @@ jobs:
       cancel-in-progress: false # keep live jobs safe
 
     steps:
-      # Checkout bot repo
-      - name: Checkout bot repo
+      - name: Checkout main repo
         uses: actions/checkout@v3
 
-      # Checkout private config repo
-      - name: Checkout config repo
+      - name: Checkout private config repo
         uses: actions/checkout@v3
         with:
           repository: mike-koala-bear/TestTactical-config
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PRIVATE_CONFIG_TOKEN }}
           path: config-repo
 
-      # Copy config.yml into bot repo
-      - name: Copy config.yml
-        run: cp config-repo/config.yml config.yml
-
-      # Replace token placeholder with actual secret
-      - name: Set Lichess token
-        run: sed -i "s/tokenXXXXX/${{ secrets.LICHESS_TOKEN }}/g" config.yml
-
-      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.13"
 
-      # Cache pip
       - name: Cache pip downloads
         uses: actions/cache@v3
         with:
@@ -53,24 +41,24 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Install dependencies & make Stockfish executable
       - name: Install dependencies & prepare
         run: |
           pip install --no-cache-dir --prefer-binary -r requirements.txt
+          # Copy config.yml from private repo
+          cp config-repo/config.yml ./config.yml
+          sed -i "s/tokenXXXXX/${{ secrets.LICHESS_TOKEN }}/g" config.yml
           chmod +x ./engines/stockfish-ubuntu-x86-64-bmi2
 
-      # Run Bot
       - name: Run Bot
         run: |
           echo "Starting bot..."
           python3 -u user_interface.py matchmaking &
           PID=$!
-          # Auto-exit before GitHub 6h limit (5h45m)
+          # Auto-exit before GitHub 6h limit
           ( sleep 20700 && echo "Time up. Killing bot..." && kill -SIGTERM $PID ) &
           wait $PID
           echo "Bot ended cleanly."
 
-      # Self-Restart
       - name: 🔁 Self-Restart
         if: always()
         run: gh workflow run "Run botli"
