@@ -47,7 +47,7 @@ jobs:
           # Copy config.yml from private repo
           cp config-repo/config.yml ./config.yml
           sed -i "s/tokenXXXXX/${{ secrets.LICHESS_TOKEN }}/g" config.yml
-          chmod +x ./engines/stockfish-ubuntu-x86-64-bmi2
+          chmod +x ./engines/stockfish-ubuntu-x86-64-avx2
 
       - name: Run Bot
         run: |
