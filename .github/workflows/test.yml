@@ -32,14 +32,13 @@ jobs:
         run: |
           Write-Host "Starting bullet self-play: Ponder false vs true"
           $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
-          Start-Process -NoNewWindow -Wait -FilePath $exePath -ArgumentList @(
-            '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=A', 'option.Threads=2', 'option.Hash=512', 'option.Ponder=false',
-            '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=B', 'option.Threads=2', 'option.Hash=512', 'option.Ponder=true',
-            '-each', 'proto=uci', 'tc=60+0.6', 'timemargin=200',
-            '-games', '100', '-repeat', '-pgnout', 'results_bullet.pgn',
-            '-draw', 'movenumber=40', 'movecount=4', 'score=5',
-            '-sprt', 'elo0=0', 'elo1=5', 'alpha=0.05', 'beta=0.05'
-          )
+          & $exePath `
+            -engine "cmd=.\engines\stockfish-ubuntu-x86-64-avx2" "name=A" "option.Threads=2" "option.Hash=512" "option.Ponder=false" `
+            -engine "cmd=.\engines\stockfish-ubuntu-x86-64-avx2" "name=B" "option.Threads=2" "option.Hash=512" "option.Ponder=true" `
+            -each "proto=uci" "tc=60+0.6" "timemargin=200" `
+            -games 100 -repeat -pgnout results_bullet.pgn `
+            -draw "movenumber=40" "movecount=4" "score=5" `
+            -sprt "elo0=0" "elo1=5" "alpha=0.05" "beta=0.05"
 
       # - name: Run crazyhouse self-play (3+0)
       #   shell: pwsh
