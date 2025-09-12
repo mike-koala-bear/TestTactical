@@ -23,6 +23,11 @@ jobs:
             https://github.com/cutechess/cutechess/releases/download/v1.4.0/Cute_Chess-1.4.0-x86_64.AppImage
           chmod +x Cute_Chess-1.4.0-x86_64.AppImage
 
+      - name: Install dependencies for AppImage
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libgl1-mesa-dev libglu1-mesa
+
       - name: Ensure stockfish is executable
         run: chmod +x ./engines/stockfish-ubuntu-x86-64-avx2
 
