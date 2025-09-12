@@ -1,4 +1,4 @@
-name: stockfish Self-Play Tests
+name: Stockfish Self-Play Tests (Windows)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   self-play:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repo
@@ -17,20 +17,22 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Download Cutechess Windows
+      - name: Download Cutechess executable
+        shell: pwsh
         run: |
-          curl -L -o cutechess-1.4.0-win64.zip https://github.com/cutechess/cutechess/releases/download/v1.4.0/cutechess-1.4.0-win64.zip
-          tar -xf cutechess-1.4.0-win64.zip
+          $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
+          Invoke-WebRequest -Uri "https://github.com/cutechess/cutechess/releases/download/v1.4.0/cutechess-1.4.0-win64.exe" -OutFile $exePath
 
       - name: Ensure Stockfish is executable
-        run: |
-          icacls .\engines\stockfish-ubuntu-x86-64-avx2 /grant Everyone:F
+        shell: pwsh
+        run: chmod +x .\engines\stockfish-ubuntu-x86-64-avx2
 
       - name: Run bullet self-play (1+0)
         shell: pwsh
         run: |
           Write-Host "Starting bullet self-play: Ponder false vs true"
-          Start-Process -NoNewWindow -Wait -FilePath .\cutechess-1.4.0-win64.exe -ArgumentList @(
+          $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
+          Start-Process -NoNewWindow -Wait -FilePath $exePath -ArgumentList @(
             '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=A', 'option.Threads=2', 'option.Hash=512', 'option.Ponder=false',
             '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=B', 'option.Threads=2', 'option.Hash=512', 'option.Ponder=true',
             '-each', 'proto=uci', 'tc=60+0.6', 'timemargin=200',
@@ -40,19 +42,21 @@ jobs:
           )
 
       # - name: Run crazyhouse self-play (3+0)
+      #   shell: pwsh
       #   run: |
-      #     echo Starting crazyhouse self-play: Ponder false vs true
-      #     .\cutechess-1.4.0-win64.exe ^
-      #       -engine cmd=.\engines\stockfish-ubuntu-x86-64-avx2 name=A option.Threads=2 option.Hash=1024 option.Ponder=false ^
-      #       -engine cmd=.\engines\stockfish-ubuntu-x86-64-avx2 name=B option.Threads=2 option.Hash=1024 option.Ponder=true ^
-      #       -each proto=uci tc=180+0 timemargin=200 ^
-      #       -games 50 -repeat -pgnout results_crazyhouse.pgn ^
-      #       -draw movenumber=40 movecount=4 score=5 ^
-      #       -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+      #     Write-Host "Starting crazyhouse self-play: Ponder false vs true"
+      #     $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
+      #     Start-Process -NoNewWindow -Wait -FilePath $exePath -ArgumentList @(
+      #       '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=A', 'option.Threads=2', 'option.Hash=1024', 'option.Ponder=false',
+      #       '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=B', 'option.Threads=2', 'option.Hash=1024', 'option.Ponder=true',
+      #       '-each', 'proto=uci', 'tc=180+0', 'timemargin=200',
+      #       '-games', '50', '-repeat', '-pgnout', 'results_crazyhouse.pgn',
+      #       '-draw', 'movenumber=40', 'movecount=4', 'score=5',
+      #       '-sprt', 'elo0=0', 'elo1=5', 'alpha=0.05', 'beta=0.05'
+      #     )
 
       - name: Output results
+        shell: pwsh
         run: |
-          echo Bullet results:
-          Get-Content results_bullet.pgn | Select-Object -Last 10
-          echo Crazyhouse results:
-          Get-Content results_crazyhouse.pgn | Select-Object -Last 10
+          Write-Host "Bullet results:"
+          Get-Content results_bullet.pgn | Select-Object -Last 20
