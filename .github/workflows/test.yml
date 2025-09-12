@@ -1,11 +1,11 @@
-name: Stockfish Self-Play Tests (Windows)
+name: Stockfish Self-Play Tests (Linux)
 
 on:
   workflow_dispatch:
 
 jobs:
   self-play:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 120
 
     steps:
@@ -17,45 +17,45 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Download Cutechess executable
-        shell: pwsh
+      - name: Install dependencies for AppImage
         run: |
-          $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
-          Invoke-WebRequest -Uri "https://github.com/cutechess/cutechess/releases/download/v1.4.0/cutechess-1.4.0-win64.exe" -OutFile $exePath
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 libxcb-cursor0 libxkbcommon-x11-0 libglu1-mesa
+
+      - name: Download Cutechess AppImage
+        run: |
+          wget -O ./Cute_Chess-1.4.0-x86_64.AppImage https://github.com/cutechess/cutechess/releases/download/v1.4.0/Cute_Chess-1.4.0-x86_64.AppImage
+          chmod +x ./Cute_Chess-1.4.0-x86_64.AppImage
 
       - name: Ensure Stockfish is executable
-        shell: pwsh
-        run: chmod +x .\engines\stockfish-ubuntu-x86-64-avx2
+        run: chmod +x ./engines/stockfish-ubuntu-x86-64-avx2
 
       - name: Run bullet self-play (1+0)
-        shell: pwsh
         run: |
-          Write-Host "Starting bullet self-play: Ponder false vs true"
-          $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
-          & $exePath `
-            -engine "cmd=.\engines\stockfish-ubuntu-x86-64-avx2" "name=A" "option.Threads=2" "option.Hash=512" "option.Ponder=false" `
-            -engine "cmd=.\engines\stockfish-ubuntu-x86-64-avx2" "name=B" "option.Threads=2" "option.Hash=512" "option.Ponder=true" `
-            -each "proto=uci" "tc=60+0.6" "timemargin=200" `
-            -games 100 -repeat -pgnout results_bullet.pgn `
-            -draw "movenumber=40" "movecount=4" "score=5" `
-            -sprt "elo0=0" "elo1=5" "alpha=0.05" "beta=0.05"
+          echo "Starting bullet self-play: Ponder false vs true"
+          ./Cute_Chess-1.4.0-x86_64.AppImage \
+            -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=A option.Threads=2 option.Hash=512 option.Ponder=false \
+            -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=B option.Threads=2 option.Hash=512 option.Ponder=true \
+            -each proto=uci tc=60+0.6 timemargin=200 \
+            -games 100 -repeat -pgnout results_bullet.pgn \
+            -draw movenumber=40 movecount=4 score=5 \
+            -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
 
       # - name: Run crazyhouse self-play (3+0)
-      #   shell: pwsh
       #   run: |
-      #     Write-Host "Starting crazyhouse self-play: Ponder false vs true"
-      #     $exePath = "$env:GITHUB_WORKSPACE\cutechess-1.4.0-win64.exe"
-      #     Start-Process -NoNewWindow -Wait -FilePath $exePath -ArgumentList @(
-      #       '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=A', 'option.Threads=2', 'option.Hash=1024', 'option.Ponder=false',
-      #       '-engine', 'cmd=.\engines\stockfish-ubuntu-x86-64-avx2', 'name=B', 'option.Threads=2', 'option.Hash=1024', 'option.Ponder=true',
-      #       '-each', 'proto=uci', 'tc=180+0', 'timemargin=200',
-      #       '-games', '50', '-repeat', '-pgnout', 'results_crazyhouse.pgn',
-      #       '-draw', 'movenumber=40', 'movecount=4', 'score=5',
-      #       '-sprt', 'elo0=0', 'elo1=5', 'alpha=0.05', 'beta=0.05'
-      #     )
+      #     echo "Starting crazyhouse self-play: Ponder false vs true"
+      #     ./Cute_Chess-1.4.0-x86_64.AppImage \
+      #       -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=A option.Threads=2 option.Hash=1024 option.Ponder=false \
+      #       -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=B option.Threads=2 option.Hash=1024 option.Ponder=true \
+      #       -each proto=uci tc=180+0 timemargin=200 \
+      #       -games 50 -repeat -pgnout results_crazyhouse.pgn \
+      #       -draw movenumber=40 movecount=4 score=5 \
+      #       -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
 
       - name: Output results
-        shell: pwsh
         run: |
-          Write-Host "Bullet results:"
-          Get-Content results_bullet.pgn | Select-Object -Last 20
+          echo "Bullet results:"
+          tail -n 20 results_bullet.pgn
+          # echo ""
+          # echo "Crazyhouse results:"
+          # tail -n 20 results_crazyhouse.pgn
