@@ -1,5 +1,9 @@
 name: Run botli
 
+permissions:
+  contents: read # keeps normal checkout etc
+  actions: write # allow creating workflow dispatch events
+
 on:
   workflow_dispatch:
   push:
