@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies for AppImage
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 libxcb-cursor0 libxkbcommon-x11-0 libglu1-mesa
+          sudo apt-get install -y libfuse2 libxcb-cursor0 libxkbcommon-x11-0 libglu1-mesa libgbm1 libgl1
 
       - name: Download Cutechess AppImage
         run: |
