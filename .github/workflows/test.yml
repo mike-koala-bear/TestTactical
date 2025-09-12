@@ -1,0 +1,56 @@
+name: stockfish Self-Play Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  self-play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Install cutechess-cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cutechess-cli
+
+      - name: Ensure stockfish-ubuntu-x86-64-avx2 is executable
+        run: chmod +x ./engines/stockfish-ubuntu-x86-64-avx2
+
+      - name: Run bullet self-play (1+0)
+        run: |
+          echo "Starting bullet self-play: Ponder false vs true"
+          cutechess-cli \
+            -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=A option.Threads=2 option.Hash=512 option.Ponder=false \
+            -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=B option.Threads=2 option.Hash=512 option.Ponder=true \
+            -each proto=uci tc=60+0.6 timemargin=200 \
+            -games 100 -repeat -pgnout results_bullet.pgn \
+            -draw movenumber=40 movecount=4 score=5 \
+            -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+
+      - name: Run crazyhouse self-play (3+0)
+        run: |
+          echo "Starting crazyhouse self-play: Ponder false vs true"
+          cutechess-cli \
+            -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=A option.Threads=2 option.Hash=1024 option.Ponder=false \
+            -engine cmd=./engines/stockfish-ubuntu-x86-64-avx2 name=B option.Threads=2 option.Hash=1024 option.Ponder=true \
+            -each proto=uci tc=180+0 timemargin=200 \
+            -games 50 -repeat -pgnout results_crazyhouse.pgn \
+            -draw movenumber=40 movecount=4 score=5 \
+            -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+
+      - name: Output results
+        run: |
+          echo "Bullet results:"
+          head -n 20 results_bullet.pgn | tail -n 10
+          echo ""
+          echo "Crazyhouse results:"
+          head -n 20 results_crazyhouse.pgn | tail -n 10
