@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout main repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Checkout private config repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           repository: mike-koala-bear/TestTactical-config
           token: ${{ secrets.PRIVATE_CONFIG_TOKEN }}
