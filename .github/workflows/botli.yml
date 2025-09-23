@@ -56,15 +56,15 @@ jobs:
       - name: Run Bot
         run: |
           echo "Starting bot..."
-          python3 -u user_interface.py matchmaking &
+          python3 -u user_interface.py &
           PID=$!
           # Auto-exit before GitHub 6h limit
           ( sleep 20700 && echo "Time up. Killing bot..." && kill -SIGTERM $PID ) &
           wait $PID
           echo "Bot ended cleanly."
 
-      - name: 🔁 Self-Restart
-        if: always()
-        run: gh workflow run "Run botli"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: 🔁 Self-Restart
+      #   if: always()
+      #   run: gh workflow run "Run botli"
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
