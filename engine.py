@@ -112,7 +112,7 @@ class Engine:
                     break
             
             # Only apply aggressive time management if equal or clearly losing (evaluation <= 0)
-            if evaluation is None or evaluation <= 0:
+            if evaluation is None or int(evaluation) <= 0:
                 if opponent_time < 3:
                     limit = replace(limit, time=0.03)
                 elif opponent_time < 5:
