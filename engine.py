@@ -6,7 +6,6 @@ import chess
 import chess.engine
 
 from configs import Engine_Config, Limit_Config, Syzygy_Config
-from dataclasses import replace
 
 
 class Engine:
