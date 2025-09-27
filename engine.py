@@ -6,6 +6,7 @@ import chess
 import chess.engine
 
 from configs import Engine_Config, Limit_Config, Syzygy_Config
+from dataclasses import replace
 
 
 class Engine:
@@ -95,6 +96,31 @@ class Engine:
                                        depth=self.limit_config.depth,
                                        nodes=self.limit_config.nodes)
             ponder = self.ponder
+
+            # Adjust limits based on opponent's remaining time (only if winning or equal)
+            if board.turn == chess.WHITE:
+                opponent_time = black_time
+            else:
+                opponent_time = white_time
+
+            # Get position evaluation to check if we're winning or equal
+            analysis = await self.engine.analysis(board, chess.engine.Limit(depth=1))
+            evaluation = None
+            async for info in analysis:
+                if 'score' in info and info['score'] is not None:
+                    evaluation = info['score'].relative
+                    break
+            
+            # Only apply aggressive time management if equal or clearly losing (evaluation <= 0)
+            if evaluation is None or evaluation <= 0:
+                if opponent_time < 3:
+                    limit = replace(limit, time=0.03)
+                elif opponent_time < 5:
+                    limit = replace(limit, time=0.05)
+                elif opponent_time < 10:
+                    limit = replace(limit, nodes=500000)
+                elif opponent_time < 20:
+                    limit = replace(limit, depth=10)
 
         result = await self.engine.play(board, limit, info=chess.engine.INFO_ALL, ponder=ponder)
 
